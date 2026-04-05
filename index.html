@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeSync Pro - Trading Journal & Psychology Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #131a2a;
+            --bg-tertiary: #1a2236;
+            --bg-card: #161d2e;
+            --border-color: #2a3548;
+            --text-primary: #e8ecf4;
+            --text-secondary: #8892a4;
+            --text-muted: #5c6578;
+            --accent-green: #00d9a5;
+            --accent-red: #ff4757;
+            --accent-blue: #4f7cff;
+            --accent-yellow: #ffc107;
+            --accent-orange: #ff7b4a;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Outfit", -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 30px; }
+        header h1 { font-family: "JetBrains Mono", monospace; font-size: 2.2rem; font-weight: 700; letter-spacing: -1px; }
+        header h1 span { background: linear-gradient(135deg, var(--accent-green), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        header p { color: var(--text-secondary); font-size: 1rem; margin-top: 8px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .stat-card .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-card .value { font-family: "JetBrains Mono", monospace; font-size: 1.4rem; font-weight: 600; }
+        .stat-card .value.positive { color: var(--accent-green); }
+        .stat-card .value.negative { color: var(--accent-red); }
+        .stat-card .value.neutral { color: var(--text-primary); }
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab-btn { padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .tab-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        .btn { font-family: "Outfit", sans-serif; font-size: 0.85rem; font-weight: 500; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-primary:hover { background: #3d6be6; transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .btn-danger { background: transparent; color: var(--accent-red); border: 1px solid var(--accent-red); padding: 6px 12px; font-size: 0.75rem; }
+        .btn-danger:hover { background: var(--accent-red); color: white; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 14px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: "JetBrains Mono", monospace; font-size: 0.9rem; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-blue); }
+        .form-group input::placeholder { color: var(--text-muted); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .tilt-selector { display: flex; gap: 8px; }
+        .tilt-btn { flex: 1; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-family: "JetBrains Mono", monospace; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+        .tilt-btn:hover { background: var(--bg-tertiary); }
+        .tilt-btn.active { border-color: var(--accent-blue); background: var(--accent-blue); color: white; }
+        .tilt-btn[data-tilt="4"].active, .tilt-btn[data-tilt="5"].active { border-color: var(--accent-red); background: var(--accent-red); }
+        .trade-list { max-height: 500px; overflow-y: auto; }
+        .trade-list::-webkit-scrollbar { width: 6px; }
+        .trade-list::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        .trade-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .trade-item { display: grid; grid-template-columns: auto 1fr auto auto auto auto; gap: 16px; align-items: center; padding: 16px; background: var(--bg-secondary); border-radius: 10px; margin-bottom: 10px; border: 2px solid transparent; transition: border-color 0.2s; position: relative; }
+        .trade-item:hover { border-color: var(--border-color); }
+        .trade-item.tilt-flag { border-color: var(--accent-red); background: rgba(255, 71, 87, 0.08); }
+        .tilt-badge { position: absolute; top: -8px; right: 8px; background: var(--accent-red); color: white; font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+        .trade-direction { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+        .trade-direction.long { background: rgba(0, 217, 165, 0.15); color: var(--accent-green); }
+        .trade-direction.short { background: rgba(255, 71, 87, 0.15); color: var(--accent-red); }
+        .trade-ticker { font-family: "JetBrains Mono", monospace; font-weight: 600; font-size: 1rem; }
+        .trade-details { font-size: 0.75rem; color: var(--text-muted); }
+        .trade-pnl { font-family: "JetBrains Mono", monospace; font-weight: 600; font-size: 0.95rem; }
+        .trade-pnl.positive { color: var(--accent-green); }
+        .trade-pnl.negative { color: var(--accent-red); }
+        .trade-tilt { display: flex; align-items: center; gap: 6px; }
+        .tilt-indicator { font-family: "JetBrains Mono", monospace; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
+        .tilt-indicator.high { background: rgba(255, 71, 87, 0.2); color: var(--accent-red); }
+        .tilt-indicator.medium { background: rgba(255, 123, 74, 0.2); color: var(--accent-orange); }
+        .tilt-indicator.low { background: rgba(255, 193, 7, 0.2); color: var(--accent-yellow); }
+        .weekly-chart { margin-top: 24px; padding: 20px; background: var(--bg-secondary); border-radius: 10px; }
+        .chart-title { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px; }
+        .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; gap: 8px; }
+        .chart-bar-container { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .chart-bar { width: 100%; max-width: 40px; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.3s ease; }
+        .chart-bar.positive { background: var(--accent-green); }
+        .chart-bar.negative { background: var(--accent-red); }
+        .chart-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+        .chart-value { font-family: "JetBrains Mono", monospace; font-size: 0.65rem; color: var(--text-secondary); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--accent-green); color: var(--text-primary); padding: 14px 20px; border-radius: 8px; font-size: 0.85rem; box-shadow: var(--shadow); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 1000; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: var(--accent-red); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; text-align: center; }
+        .modal h3 { margin-bottom: 12px; color: var(--accent-red); }
+        .modal p { color: var(--text-secondary); margin-bottom: 20px; }
+        .modal-btns { display: flex; gap: 12px; justify-content: center; }
+        .pnl-preview { background: var(--bg-tertiary); border-radius: 8px; padding: 12px; text-align: center; margin-top: 12px; }
+        .pnl-preview .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .pnl-preview .value { font-family: "JetBrains Mono", monospace; font-size: 1.2rem; font-weight: 600; }
+        @media (max-width: 600px) { .container { padding: 12px; } .trade-item { grid-template-columns: auto 1fr; gap: 12px; } .trade-details, .trade-tilt, .trade-actions { grid-column: span 2; } .trade-pnl { grid-column: 1; } .form-row { grid-template-columns: 1fr; } .dashboard-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>⬡ TradeSync</span> Pro</h1>
+            <p>Trade smarter. Journal better.</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="stat-card"><div class="label">Trade Count</div><div class="value neutral" id="stat-count">0</div></div>
+            <div class="stat-card"><div class="label">Win Rate</div><div class="value neutral" id="stat-winrate">--%</div></div>
+            <div class="stat-card"><div class="label">Total P&L</div><div class="value neutral" id="stat-pnl">$0.00</div></div>
+            <div class="stat-card"><div class="label">Avg Win</div><div class="value positive" id="stat-avgwin">--</div></div>
+            <div class="stat-card"><div class="label">Avg Loss</div><div class="value negative" id="stat-avgloss">--</div></div>
+            <div class="stat-card"><div class="label">Largest Win</div><div class="value positive" id="stat-maxwin">--</div></div>
+            <div class="stat-card"><div class="label">Largest Loss</div><div class="value negative" id="stat-maxloss">--</div></div>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">New Trade</h2></div>
+                <form id="trade-form">
+                    <div class="form-group"><label>Ticker Symbol</label><input type="text" id="ticker" placeholder="AAPL, TSLA, BTC" maxlength="10" required></div>
+                    <div class="form-group"><label>Direction</label><select id="direction" required><option value="long">Long</option><option value="short">Short</option></select></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Entry Price</label><input type="number" step="any" id="entry" placeholder="0.00" required></div>
+                        <div class="form-group"><label>Exit Price</label><input type="number" step="any" id="exit" placeholder="0.00" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Position Size</label><input type="number" step="any" id="size" placeholder="0" required></div>
+                        <div class="form-group"><label>Trade Date</label><input type="date" id="date" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Emotional Tilt</label>
+                        <div class="tilt-selector">
+                            <button type="button" class="tilt-btn" data-tilt="1">1</button>
+                            <button type="button" class="tilt-btn" data-tilt="2">2</button>
+                            <button type="button" class="tilt-btn" data-tilt="3">3</button>
+                            <button type="button" class="tilt-btn" data-tilt="4">4</button>
+                            <button type="button" class="tilt-btn" data-tilt="5">5</button>
+                        </div>
+                        <input type="hidden" id="tilt" value="3">
+                    </div>
+                    <div class="pnl-preview">
+                        <div class="label">P&L Preview</div>
+                        <div class="value" id="pnl-preview">$0.00</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">Add Trade</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Trade Journal</h2><button class="btn btn-secondary" id="export-btn">Export CSV</button></div>
+                <div class="tabs"><button class="tab-btn active" data-filter="all">All Trades</button><button class="tab-btn" data-filter="tilt">Tilt Trades</button></div>
+                <div class="trade-list" id="trade-list">
+                    <div class="empty-state"><p>No trades yet — log your first trade above</p></div>
+                </div>
+                <div class="weekly-chart" id="weekly-chart">
+                    <div class="chart-title">This Week's P&L (Last 7 Days)</div>
+                    <div class="chart-bars" id="chart-bars"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h3>Delete Trade?</h3>
+            <p id="modal-text">This cannot be undone.</p>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn-danger" id="modal-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = "tradesync_trades";
+        let currentFilter = "all";
+        let deleteTargetId = null;
+
+        function generateId() {
+            return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("date").value = new Date().toISOString().split("T")[0];
+            renderTrades();
+            updateStats();
+            updateWeeklyChart();
+
+            document.getElementById("trade-form").addEventListener("submit", handleAddTrade);
+            document.getElementById("export-btn").addEventListener("click", exportCSV);
+            document.getElementById("modal-cancel").addEventListener("click", closeModal);
+            document.getElementById("modal-confirm").addEventListener("click", confirmDelete);
+
+            document.querySelectorAll(".tilt-btn").forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    document.querySelectorAll(".tilt-btn").forEach(function(b) { b.classList.remove("active"); });
+                    btn.classList.add("active");
+                    document.getElementById("tilt").value = btn.dataset.tilt;
+                    updatePnlPreview();
+                });
+            });
+            document.querySelector('.tilt-btn[data-tilt="3"]').classList.add("active");
+
+            ["entry", "exit", "size", "direction"].forEach(function(id) {
+                document.getElementById(id).addEventListener("input", updatePnlPreview);
+                document.getElementById(id).addEventListener("change", updatePnlPreview);
+            });
+
+            document.querySelectorAll(".tab-btn").forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+                    btn.classList.add("active");
+                    currentFilter = btn.dataset.filter;
+                    renderTrades();
+                });
+            });
+
+            document.getElementById("ticker").addEventListener("input", function(e) { e.target.value = e.target.value.toUpperCase(); });
+        });
+
+        function getTrades() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } 
+            catch { return []; }
+        }
+        function saveTrades(trades) { localStorage.setItem(STORAGE_KEY, JSON.stringify(trades)); }
+
+        function calculatePnl(entry, exit, size, direction) {
+            var dirMult = direction === "long" ? 1 : -1;
+            return (exit - entry) * size * dirMult;
+        }
+
+        function updatePnlPreview() {
+            var entry = parseFloat(document.getElementById("entry").value) || 0;
+            var exit = parseFloat(document.getElementById("exit").value) || 0;
+            var size = parseFloat(document.getElementById("size").value) || 0;
+            var direction = document.getElementById("direction").value;
+            var pnl = calculatePnl(entry, exit, size, direction);
+            var el = document.getElementById("pnl-preview");
+            el.textContent = (pnl >= 0 ? "+" : "") + "$" + pnl.toFixed(2);
+            el.className = "value " + (pnl >= 0 ? "positive" : "negative");
+        }
+
+        function handleAddTrade(e) {
+            e.preventDefault();
+            var ticker = document.getElementById("ticker").value.trim().toUpperCase();
+            if (!ticker) { showToast("Ticker required", true); return; }
+            var tilt = parseInt(document.getElementById("tilt").value);
+            
+            var entry = parseFloat(document.getElementById("entry").value);
+            var exit = parseFloat(document.getElementById("exit").value);
+            var size = parseFloat(document.getElementById("size").value);
+            if (!entry || !exit || !size) { showToast("Fill all price and size fields", true); return; }
+
+            var direction = document.getElementById("direction").value;
+            var pnl = calculatePnl(entry, exit, size, direction);
+
+            var trade = {
+                id: generateId(),
+                ticker: ticker, 
+                direction: direction, 
+                entryPrice: entry, 
+                exitPrice: exit, 
+                size: size,
+                date: document.getElementById("date").value, 
+                tilt: tilt, 
+                pnl: pnl,
+                createdAt: new Date().toISOString()
+            };
+
+            var trades = getTrades();
+            trades.unshift(trade);
+            saveTrades(trades);
+
+            document.getElementById("trade-form").reset();
+            document.getElementById("date").value = new Date().toISOString().split("T")[0];
+            document.querySelectorAll(".tilt-btn").forEach(function(b) { b.classList.remove("active"); });
+            document.querySelector('.tilt-btn[data-tilt="3"]').classList.add("active");
+            document.getElementById("tilt").value = 3;
+            document.getElementById("pnl-preview").textContent = "$0.00";
+            document.getElementById("pnl-preview").className = "value";
+
+            renderTrades();
+            updateStats();
+            updateWeeklyChart();
+            showToast("Trade logged");
+        }
+
+        function deleteTrade(id, ticker) {
+            deleteTargetId = id;
+            document.getElementById("modal-text").textContent = "Delete " + ticker + " trade? This cannot be undone.";
+            document.getElementById("modal").classList.add("show");
+        }
+
+        function closeModal() { 
+            document.getElementById("modal").classList.remove("show"); 
+            deleteTargetId = null; 
+        }
+
+        function confirmDelete() {
+            if (deleteTargetId) {
+                var trades = getTrades().filter(function(t) { return t.id !== deleteTargetId; });
+                saveTrades(trades);
+                closeModal();
+                renderTrades();
+                updateStats();
+                updateWeeklyChart();
+                showToast("Trade deleted");
+            }
+        }
+
+        function renderTrades() {
+            var trades = getTrades();
+            var container = document.getElementById("trade-list");
+
+            var filtered = currentFilter === "tilt" ? trades.filter(function(t) { return t.tilt >= 4 && t.pnl < 0; }) : trades;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>' + (currentFilter === "tilt" ? "No tilt trades yet" : "No trades yet — log your first trade above") + '</p></div>';
+                return;
+            }
+
+            var tiltCount = trades.filter(function(t) { return t.tilt >= 4 && t.pnl < 0; }).length;
+            var html = "";
+            if (currentFilter === "tilt") {
+                html = '<div style="padding:8px 0;color:var(--text-muted);font-size:0.85rem;">Showing ' + filtered.length + ' tilt trade' + (filtered.length !== 1 ? "s" : "") + ' (' + tiltCount + ' total)</div>';
+            }
+
+            filtered.forEach(function(trade) {
+                var isTiltTrade = trade.tilt >= 4 && trade.pnl < 0;
+                var tiltClass = trade.tilt >= 4 ? "high" : (trade.tilt >= 3 ? "medium" : "low");
+                html += '<div class="trade-item ' + (isTiltTrade ? "tilt-flag" : "") + '">';
+                if (isTiltTrade) html += '<div class="tilt-badge">TILT</div>';
+                html += '<span class="trade-direction ' + trade.direction + '">' + trade.direction + '</span>';
+                html += '<div><div class="trade-ticker">' + trade.ticker + '</div><div class="trade-details">' + formatDate(trade.date) + ' · ' + trade.size + ' @ ' + trade.entryPrice + ' → ' + trade.exitPrice + '</div></div>';
+                html += '<div class="trade-pnl ' + (trade.pnl >= 0 ? "positive" : "negative") + '">' + (trade.pnl >= 0 ? "+" : "") + '$' + trade.pnl.toFixed(2) + '</div>';
+                html += '<div class="trade-tilt"><span class="tilt-indicator ' + tiltClass + '">T' + trade.tilt + '</span></div>';
+                html += '<button class="btn btn-danger" onclick="deleteTrade(\'' + trade.id + '\', \'' + trade.ticker + '\')">Delete</button>';
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateStats() {
+            var trades = getTrades();
+            if (trades.length === 0) {
+                document.getElementById("stat-count").textContent = "0";
+                document.getElementById("stat-winrate").textContent = "--%";
+                document.getElementById("stat-pnl").textContent = "$0.00";
+                document.getElementById("stat-avgwin").textContent = "--";
+                document.getElementById("stat-avgloss").textContent = "--";
+                document.getElementById("stat-maxwin").textContent = "--";
+                document.getElementById("stat-maxloss").textContent = "--";
+                return;
+            }
+
+            var wins = trades.filter(function(t) { return t.pnl > 0; });
+            var losses = trades.filter(function(t) { return t.pnl < 0; });
+            var totalPnl = trades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
+            var winRate = (wins.length / trades.length * 100).toFixed(1);
+            var avgWin = wins.length ? wins.reduce(function(s, t) { return s + t.pnl; }, 0) / wins.length : 0;
+            var avgLoss = losses.length ? losses.reduce(function(s, t) { return s + t.pnl; }, 0) / losses.length : 0;
+            var maxWin = wins.length ? Math.max.apply(null, wins.map(function(t) { return t.pnl; })) : 0;
+            var maxLoss = losses.length ? Math.min.apply(null, losses.map(function(t) { return t.pnl; })) : 0;
+
+            var pnlEl = document.getElementById("stat-pnl");
+            pnlEl.textContent = "$" + totalPnl.toFixed(2);
+            pnlEl.className = "value " + (totalPnl >= 0 ? "positive" : "negative");
+
+            document.getElementById("stat-count").textContent = trades.length;
+            document.getElementById("stat-winrate").textContent = winRate + "%";
+            document.getElementById("stat-avgwin").textContent = avgWin > 0 ? "$" + avgWin.toFixed(2) : "--";
+            document.getElementById("stat-avgloss").textContent = avgLoss < 0 ? "$" + avgLoss.toFixed(2) : "--";
+            document.getElementById("stat-maxwin").textContent = maxWin > 0 ? "$" + maxWin.toFixed(2) : "--";
+            document.getElementById("stat-maxloss").textContent = maxLoss < 0 ? "$" + maxLoss.toFixed(2) : "--";
+        }
+
+        function updateWeeklyChart() {
+            var trades = getTrades();
+            var barsContainer = document.getElementById("chart-bars");
+            if (!trades.length) { barsContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><p>No data yet</p></div>'; return; }
+
+            var days = [];
+            for (var i = 6; i >= 0; i--) { var d = new Date(); d.setDate(d.getDate() - i); days.push(d.toISOString().split("T")[0]); }
+            var dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            var dayData = days.map(function(day) { 
+                return trades.filter(function(t) { return t.date === day; }).reduce(function(sum, t) { return sum + t.pnl; }, 0); 
+            });
+            var maxAbs = Math.max.apply(null, dayData.map(Math.abs).concat([1]));
+
+            var html = days.map(function(day, i) {
+                var dayName = dayNames[new Date(day).getDay()];
+                var value = dayData[i];
+                var height = Math.max((Math.abs(value) / maxAbs) * 100, 5);
+                return '<div class="chart-bar-container"><div class="chart-value">' + (value >= 0 ? "+" : "") + '$' + value.toFixed(0) + '</div><div class="chart-bar ' + (value >= 0 ? "positive" : "negative") + '" style="height:' + height + 'px"></div><div class="chart-label">' + dayName + '</div></div>';
+            }).join("");
+            barsContainer.innerHTML = html;
+        }
+
+        function exportCSV() {
+            var trades = getTrades();
+            if (!trades.length) { showToast("No trades to export", true); return; }
+            var headers = ["Date", "Ticker", "Direction", "Entry", "Exit", "Size", "P&L", "Tilt"];
+            var rows = trades.map(function(t) { return [t.date, t.ticker, t.direction, t.entryPrice, t.exitPrice, t.size, t.pnl.toFixed(2), t.tilt]; });
+            var csv = [headers.join(","), rows.map(function(r) { return r.join(","); })].join("\n");
+            var blob = new Blob([csv], { type: "text/csv" });
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "tradesync-export-" + new Date().toISOString().split("T")[0] + ".csv";
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast("Exported " + trades.length + " trades");
+        }
+
+        function formatDate(dateStr) {
+            var d = new Date(dateStr + "T00:00:00");
+            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        }
+
+        function showToast(message, isError) {
+            var toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = "toast show" + (isError ? " error" : "");
+            setTimeout(function() { toast.className = "toast"; }, 3000);
+        }
+
+        window.deleteTrade = deleteTrade;
+    </script>
+</body>
+</html>
