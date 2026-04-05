@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeSync - Trading Psychology + Journal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { color: #00d4aa; margin-bottom: 8px; }
+    h2 { color: #fff; margin: 24px 0 12px; font-size: 1.2rem; }
+    .tagline { color: #888; margin-bottom: 24px; }
+    .card { background: #1a1a1a; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    input, select, textarea { width: 100%; padding: 12px; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff; margin-bottom: 12px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #00d4aa; }
+    button { background: #00d4aa; color: #000; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #00eebb; }
+    .btn-secondary { background: #333; color: #fff; }
+    .btn-secondary:hover { background: #444; }
+    .stats-row { display: flex; gap: 24px; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #00d4aa; }
+    .stat-label { font-size: 0.85rem; color: #888; }
+    .positive { color: #00d4aa; }
+    .negative { color: #ff4757; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { padding: 10px 20px; background: #252525; border-radius: 8px; cursor: pointer; }
+    .tab.active { background: #00d4aa; color: #000; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+    th { color: #888; font-weight: 500; }
+    .checklist-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .checklist-item input[type="checkbox"] { width: auto; margin: 0; }
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .tabs-nav { display: flex; gap: 4px; background: #1a1a1a; padding: 4px; border-radius: 10px; }
+    .tab-nav { padding: 8px 16px; border-radius: 8px; cursor: pointer; color: #888; }
+    .tab-nav.active { background: #252525; color: #fff; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <div>
+        <h1>TradeSync 📈</h1>
+        <p class="tagline">Unified Trading Psychology + Journal Platform</p>
+      </div>
+      <div class="tabs-nav">
+        <div class="tab-nav active" onclick="showTab('journal')">Journal</div>
+        <div class="tab-nav" onclick="showTab('psychology')">Psychology</div>
+        <div class="tab-nav" onclick="showTab('compare')">Compare</div>
+      </div>
+    </div>
+
+    <!-- Journal Tab -->
+    <div id="journal" class="tab-content">
+      <div class="card">
+        <h2>📝 Log New Trade</h2>
+        <div class="grid">
+          <input type="text" id="symbol" placeholder="Symbol (e.g., BTC, AAPL, EURUSD)">
+          <select id="direction">
+            <option value="">Direction</option>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+          </select>
+          <input type="number" id="entryPrice" placeholder="Entry Price" step="any">
+          <input type="number" id="exitPrice" placeholder="Exit Price" step="any">
+          <input type="number" id="size" placeholder="Position Size">
+          <input type="text" id="strategy" placeholder="Strategy/Setup">
+        </div>
+        <textarea id="notes" rows="2" placeholder="Trade notes..."></textarea>
+        <button onclick="addTrade()">Log Trade</button>
+      </div>
+
+      <div class="card">
+        <h2>📊 Performance Summary</h2>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value" id="totalTrades">0</div>
+            <div class="stat-label">Total Trades</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="winRate">0%</div>
+            <div class="stat-label">Win Rate</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="totalPnL">$0</div>
+            <div class="stat-label">Total P&L</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📋 Trade History</h2>
+        <table id="tradeTable">
+          <thead><tr><th>Date</th><th>Symbol</th><th>Dir</th><th>P&L</th><th>Strategy</th></tr></thead>
+          <tbody id="tradeHistory"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Psychology Tab -->
+    <div id="psychology" class="tab-content hidden">
+      <div class="card">
+        <h2>🧠 Pre-Trade Psychology</h2>
+        <p style="color:#888;margin-bottom:16px;">Rate your mindset before trading:</p>
+        <label style="display:block;margin-bottom:8px;">Mood (1-5)</label>
+        <input type="range" id="mood" min="1" max="5" value="3" oninput="document.getElementById('moodVal').textContent=this.value">
+        <span id="moodVal" style="color:#00d4aa;font-weight:600;">3</span>
+        <label style="display:block;margin:16px 0 8px;">Pre-Trade Checklist</label>
+        <div class="checklist-item"><input type="checkbox" id="check1"><label>Analyzed market structure</label></div>
+        <div class="checklist-item"><input type="checkbox" id="check2"><label>Reviewed setup criteria</label></div>
+        <div class="checklist-item"><input type="checkbox" id="check3"><label>Set stop loss</label></div>
+        <div class="checklist-item"><input type="checkbox" id="check4"><label>Defined exit plan</label></div>
+        <button onclick="savePsychology()" style="margin-top:16px;">Save Psychology</button>
+      </div>
+
+      <div class="card">
+        <h2>📈 Psychology Trends</h2>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value" id="avgMood">-</div>
+            <div class="stat-label">Avg Mood</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="checklistRate">-</div>
+            <div class="stat-label">Checklist %</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="disciplineScore">-</div>
+            <div class="stat-label">Discipline Score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare Tab -->
+    <div id="compare" class="tab-content hidden">
+      <div class="card">
+        <h2>⚖️ Backtest vs Live Comparator</h2>
+        <div class="grid">
+          <input type="text" id="btSymbol" placeholder="Symbol">
+          <input type="number" id="btWins" placeholder="Backtest Wins">
+          <input type="number" id="btLosses" placeholder="Backtest Losses">
+          <input type="number" id="btWinRate" placeholder="Backtest Win Rate %">
+          <input type="number" id="slippage" placeholder="Slippage % (default 5%)" value="5">
+        </div>
+        <button onclick="compare()">Compare</button>
+      </div>
+
+      <div class="card" id="compareResult" style="display:none;">
+        <h2>📊 Comparison Result</h2>
+        <p>Backtest: <span id="btDisplay">-</span></p>
+        <p>Live (with slippage): <span id="liveDisplay">-</span></p>
+        <p>Gap: <span id="gapDisplay">-</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+    let psych = JSON.parse(localStorage.getItem('psych') || '[]');
+
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.querySelectorAll('.tab-nav').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function addTrade() {
+      const trade = {
+        date: new Date().toISOString().split('T')[0],
+        symbol: document.getElementById('symbol').value.toUpperCase(),
+        direction: document.getElementById('direction').value,
+        entry: parseFloat(document.getElementById('entryPrice').value) || 0,
+        exit: parseFloat(document.getElementById('exitPrice').value) || 0,
+        size: parseFloat(document.getElementById('size').value) || 0,
+        strategy: document.getElementById('strategy').value,
+        notes: document.getElementById('notes').value,
+        pnl: ((parseFloat(document.getElementById('exitPrice').value) - parseFloat(document.getElementById('entryPrice').value)) * parseFloat(document.getElementById('size').value) * (document.getElementById('direction').value === 'short' ? -1 : 1)
+      };
+      if (!trade.symbol) return alert('Symbol required');
+      trades.push(trade);
+      localStorage.setItem('trades', JSON.stringify(trades));
+      updateStats();
+      renderHistory();
+      ['symbol','direction','entryPrice','exitPrice','size','strategy','notes'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function updateStats() {
+      document.getElementById('totalTrades').textContent = trades.length;
+      const wins = trades.filter(t => t.pnl > 0).length;
+      document.getElementById('winRate').textContent = trades.length ? Math.round(wins/trades.length*100) + '%' : '0%';
+      const total = trades.reduce((s,t) => s + t.pnl, 0);
+      document.getElementById('totalPnL').textContent = (total >= 0 ? '+' : '') + '$' + total.toFixed(2);
+      document.getElementById('totalPnL').className = 'stat-value ' + (total >= 0 ? 'positive' : 'negative');
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('tradeHistory');
+      tbody.innerHTML = trades.slice().reverse().map(t => `<tr>
+        <td>${t.date}</td>
+        <td>${t.symbol}</td>
+        <td>${t.direction}</td>
+        <td class="${t.pnl >= 0 ? 'positive' : 'negative'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+        <td>${t.strategy}</td>
+      </tr>`).join('');
+    }
+
+    function savePsychology() {
+      const entry = {
+        date: new Date().toISOString().split('T')[0],
+        mood: parseInt(document.getElementById('mood').value),
+        checklist: ['check1','check2','check3','check4'].filter(c => document.getElementById(c).checked).length
+      };
+      psych.push(entry);
+      localStorage.setItem('psych', JSON.stringify(psych));
+      updatePsychStats();
+      alert('Psychology saved!');
+    }
+
+    function updatePsychStats() {
+      if (!psych.length) return;
+      const avg = psych.reduce((s,e) => s + e.mood, 0) / psych.length;
+      const checkAvg = psych.reduce((s,e) => s + e.checklist, 0) / psych.length * 25;
+      document.getElementById('avgMood').textContent = avg.toFixed(1);
+      document.getElementById('checklistRate').textContent = Math.round(checkAvg) + '%';
+    }
+
+    function compare() {
+      const bt = parseFloat(document.getElementById('btWinRate').value) || 0;
+      const slip = parseFloat(document.getElementById('slippage').value) || 5;
+      const live = bt * (1 - slip/100);
+      document.getElementById('btDisplay').textContent = bt + '%';
+      document.getElementById('liveDisplay').textContent = live.toFixed(1) + '%';
+      document.getElementById('gapDisplay').textContent = (bt - live).toFixed(1) + '%';
+      document.getElementById('compareResult').style.display = 'block';
+    }
+
+    updateStats();
+    renderHistory();
+    updatePsychStats();
+  </script>
+</body>
+</html>
